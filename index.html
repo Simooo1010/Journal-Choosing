@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocollo dei 7 Vettori dell'Intensità - Estrazione</title>
+  <!-- Google Fonts: Outfit (Elegant sans-serif) & JetBrains Mono (Technical details) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- PWA & iOS Home Screen Settings -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+  <div class="background-glow"></div>
+  
+  <div class="app-container">
+    <!-- Header: App metadata and temporal status -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="logo-icon">⚡</span>
+        <h1>Protocollo dei 7 Vettori</h1>
+      </div>
+      <div class="status-panel">
+        <div class="status-item">
+          <span class="status-label">Stato Reset:</span>
+          <span class="status-value highlight" id="reset-status">Lun 00:00</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Mazzo:</span>
+          <span class="status-value highlight" id="deck-counter">0 / 7 estratti</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Deck visual indicator: The 7 vectors of Intensity -->
+    <section class="deck-section">
+      <h2>Vettori della Settimana</h2>
+      <div class="deck-grid" id="deck-grid" data-figma-id="card-deck">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- Main Stage: Card drawing and active daily prompt -->
+    <main class="main-stage">
+      <!-- State A: Card Back / Shuffle Stage -->
+      <div class="stage-card draw-stage" id="draw-stage">
+        <div class="card-back-design">
+          <div class="inner-pattern"></div>
+          <span class="card-logo">⚡</span>
+        </div>
+        <div class="card-action-block">
+          <h3>Nessun Vettore Estratto Oggi</h3>
+          <p>Estrai la tua domanda di oggi. Riceverai una sola domanda al giorno. Il mazzo si resetta automaticamente ogni lunedì alle 00:00.</p>
+          <button class="btn btn-primary" id="btn-extract" data-figma-id="btn-extract">
+            <span class="btn-icon">🎲</span>
+            Estrai Vettore
+          </button>
+        </div>
+      </div>
+
+      <!-- State B: Active Question Drawn Today -->
+      <div class="stage-card active-stage hidden" id="active-stage">
+        <div class="active-card-header">
+          <span class="badge" id="category-badge" data-figma-id="badge-category">TIPO</span>
+          <span class="card-date" id="card-date">14 Giu 2026</span>
+        </div>
+        <div class="active-card-content">
+          <blockquote class="question-text" id="question-text" data-figma-id="text-question">
+            "Quale deviazione audace o fuori dagli schemi..."
+          </blockquote>
+        </div>
+        <div class="active-card-footer">
+          <p class="helper-text">Concentrati su questo vettore per tutta la giornata di oggi.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Utility Controls -->
+    <section class="utility-section">
+      <div class="utility-row">
+        <button class="btn btn-secondary btn-sm" id="btn-manual-reset">
+          Reinizializza Mazzo Settimanale
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="app-footer">
+    <p>Protocollo dei 7 Vettori dell'Intensità &copy; 2026 • Progettato per l'eccellenza</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
