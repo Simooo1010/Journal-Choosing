@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Protocollo dei 7 Vettori dell'Intensità - Pianificazione</title>
-  <!-- Google Fonts: Outfit (Elegant sans-serif) & JetBrains Mono (Technical details) -->
+  <title>Protocollo dei 7 Vettori dell'Intensità</title>
+  <!-- Google Fonts: Playfair Display (Serif) & JetBrains Mono (Technical details) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,700&family=JetBrains+Mono:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <!-- PWA & iOS Home Screen Settings -->
   <link rel="manifest" href="manifest.json">
@@ -48,109 +48,52 @@
 
     <!-- Main Stage: Card drawing and active daily prompt -->
     <main class="main-stage">
-      <!-- State A: Card Back / Shuffle Stage -->
-      <div class="stage-card draw-stage" id="draw-stage">
-        <div class="card-back-design">
-          <div class="inner-pattern"></div>
-          <span class="card-logo">⚡</span>
+      <!-- Stage Card showing active vector or draw action -->
+      <div class="stage-card" id="main-card-stage">
+        
+        <!-- State A: Default Card Back (Visible if nothing has been extracted) -->
+        <div class="card-back-view" id="card-back-view">
+          <div class="card-back-design">
+            <div class="inner-pattern"></div>
+            <span class="card-logo">⚡</span>
+          </div>
+          <h3>Nessun Vettore Estratto</h3>
+          <p>Estrai un vettore casuale. Il sistema esclude quelli già estratti questa settimana.</p>
         </div>
-        <div class="card-action-block">
-          <h3>Nessun Vettore Estratto Oggi</h3>
-          <p>Estrai la tua domanda di oggi. Riceverai una sola domanda al giorno. Il mazzo si reseterà automaticamente il lunedì.</p>
-          <button class="btn btn-primary" id="btn-extract" data-figma-id="btn-extract">
+
+        <!-- State B: Active Question Details (Visible when extracted) -->
+        <div class="active-card-view hidden" id="active-card-view">
+          <div class="active-card-header">
+            <span class="badge" id="category-badge">TIPO</span>
+            <span class="card-date" id="card-date">15 Giu 2026</span>
+          </div>
+          <div class="active-card-content">
+            <blockquote class="question-text" id="question-text">
+              "Testo della domanda..."
+            </blockquote>
+          </div>
+        </div>
+
+        <!-- Extraction Controls (Always visible/centered) -->
+        <div class="card-controls">
+          <button class="btn btn-primary" id="btn-extract">
             <span class="btn-icon">🎲</span>
             Estrai Vettore
           </button>
         </div>
       </div>
-
-      <!-- State B: Active Question with Split Inputs -->
-      <div class="stage-card active-stage hidden" id="active-stage">
-        <div class="active-card-header">
-          <span class="badge" id="category-badge" data-figma-id="badge-category">TIPO</span>
-          <span class="card-date" id="card-date">15 Giu 2026</span>
-        </div>
-        <div class="active-card-content">
-          <blockquote class="question-text" id="question-text" data-figma-id="text-question">
-            "Quale deviazione audace..."
-          </blockquote>
-        </div>
-        
-        <!-- Split Layout Inputs -->
-        <div class="split-inputs-container">
-          <div class="input-block">
-            <label for="input-reflection-today">1. La Riflessione sull'Oggi (Retrospettiva)</label>
-            <textarea 
-              id="input-reflection-today" 
-              data-figma-id="input-reflection-today" 
-              placeholder="Analizza la tua giornata. Cosa hai evitato o subito passivamente?"
-              rows="4"></textarea>
-          </div>
-          <div class="input-block">
-            <label for="input-action-tomorrow">2. L'Azione del Domani (Proattiva)</label>
-            <textarea 
-              id="input-action-tomorrow" 
-              data-figma-id="input-action-tomorrow" 
-              placeholder="Quale azione concreta compirai domani per rompere lo schema?"
-              rows="4"></textarea>
-          </div>
-        </div>
-
-        <div class="active-card-footer split-footer">
-          <button class="btn btn-primary" id="btn-save" data-figma-id="btn-save">
-            <span class="btn-icon">✓</span>
-            Salva e Pianifica
-          </button>
-        </div>
-      </div>
-
-      <!-- State C: Question Drawn and Answered Today -->
-      <div class="stage-card completed-stage hidden" id="completed-stage">
-        <div class="active-card-header">
-          <span class="badge" id="completed-category-badge">TIPO</span>
-          <span class="card-date" id="completed-card-date">15 Giu 2026</span>
-        </div>
-        <div class="active-card-content">
-          <blockquote class="question-text" id="completed-question-text">
-            "Testo domanda..."
-          </blockquote>
-        </div>
-        
-        <!-- Split Layout Saved Previews -->
-        <div class="split-previews-container">
-          <div class="preview-block block-today">
-            <h4>Riflessione sull'Oggi</h4>
-            <p id="preview-reflection-today">Testo riflessione...</p>
-          </div>
-          <div class="preview-block block-tomorrow">
-            <h4>Pianificazione per Domani</h4>
-            <p id="preview-action-tomorrow">Testo azione...</p>
-          </div>
-        </div>
-        
-        <div class="active-card-footer">
-          <p class="helper-text highlight">✓ Vettore completato per oggi. Sei pronto per domani.</p>
-        </div>
-      </div>
     </main>
 
-    <!-- History: Historical archive of all past completed vectors -->
-    <section class="history-section">
-      <div class="section-header">
-        <h2>Cronologia Storica</h2>
-        <button class="btn btn-secondary btn-sm" id="btn-manual-reset">
-          Reinizializza Mazzo Settimanale
-        </button>
-      </div>
-      <div class="history-list" id="history-list">
-        <!-- Rendered dynamically by app.js -->
-        <div class="no-history">Nessuna riflessione registrata finora. Inizia oggi!</div>
-      </div>
+    <!-- Utility Controls -->
+    <section class="utility-section">
+      <button class="btn btn-secondary btn-sm" id="btn-manual-reset">
+        Reinizializza Mazzo
+      </button>
     </section>
   </div>
 
   <footer class="app-footer">
-    <p>Protocollo dei 7 Vettori dell'Intensità &copy; 2026 • Progettato per l'eccellenza</p>
+    <p>Protocollo dei 7 Vettori dell'Intensità &copy; 2026</p>
   </footer>
 
   <script src="app.js"></script>
