@@ -31,79 +31,63 @@
  *   a) Caricamento iniziale della pagina (DOMContentLoaded).
  *   b) Focus della finestra (window.onfocus) - es. riapertura tab o risveglio da standby.
  *   c) Cambio visibilità (visibilitychange) - es. cambio scheda del browser.
- * 
- * ============================================================================
- * AGGANCIO FIGMA MCP (PREDISPOSIZIONE ARCHITETTURA FUTURE)
- * ============================================================================
- * Nello sviluppo futuro con l'MCP Figma Server, le variabili DOM sottostanti
- * verranno collegate direttamente agli ID dei nodi grafici e delle istanze
- * di Figma. Le associazioni sono tracciate tramite l'attributo data-figma-id.
  * ============================================================================
  */
 
-// 1. Data Model statico: Il Mazzo Chiuso dei 7 Vettori
+// 1. Nuovo Dataset: Set a doppio vettore (Riflessione + Azione Proattiva)
 const VETTORI_DECK_INITIAL = [
-  { id: 1, tipo: "Diretto", testo: "Quale deviazione audace o fuori dagli schemi ho attivamente evitato (o mancato) oggi per rimanere nella mia zona di comfort?", usata: false },
-  { id: 2, tipo: "Esistenziale", testo: "Se la giornata di oggi fosse l'unico capitolo scritto di questa settimana, quale scintilla di memorabile follia avrei potuto inserire per renderlo indimenticabile?", usata: false },
-  { id: 3, tipo: "Regia Cinematografica", testo: "Se un regista dovesse tagliare la giornata di oggi perché priva di colpi di scena, in quale momento avrei dovuto inserire una scelta improvvisa, folle o dirompente per salvare la scena?", usata: false },
-  { id: 4, tipo: "Generatore di Aneddoti", testo: "Tra vent'anni, quale micro-evento di oggi non avrò assolutamente alcuna possibilità di ricordare? Cosa avrei potuto fare di insolito o rischioso per trasformarlo in un aneddoto memorabile?", usata: false },
-  { id: 5, tipo: "Alter Ego", testo: "Se oggi avessi ceduto il controllo al mio alter ego più audace, impulsivo e curioso, in quale esatto momento avrebbe preso il sopravvento e cosa avrebbe fatto di totalmente inaspettato?", usata: false },
-  { id: 6, tipo: "Costo del Rimpianto", testo: "In quale momento di oggi ho scambiato la sicurezza della routine con la certezza della noia? Quale deviazione elettrizzante ho sacrificato sull'altare del 'computo delle cose da fare'?", usata: false },
-  { id: 7, tipo: "Uscita di Sicurezza", testo: "In quale interazione o situazione di oggi ho scelto di essere 'educato e prevedibile' anziché autentico, dirompente o memorabile? Cosa avrei dovuto dire o fare se non avessi temuto il giudizio immediato?", usata: false }
+  { id: 1, tipo: "Diretto", testo: "Quale deviazione audace ho evitato oggi per rimanere comodo, e come posso riprogrammare esattamente quella deviazione (o una simile) per la giornata di domani?", usata: false },
+  { id: 2, tipo: "Esistenziale", testo: "Se oggi è stato un capitolo piatto, quale singola azione straordinaria o fuori dagli schemi pianifico deliberatamente per domani per rendere memorabile questa settimana?", usata: false },
+  { id: 3, tipo: "Regia Cinematografica", testo: "Se un regista tagliasse la giornata di oggi perché priva di colpi di scena, quale 'scena madre' o inversione di rotta inaspettata decido di scrivere e recitare domani?", usata: false },
+  { id: 4, tipo: "Generatore di Aneddoti", testo: "Oggi non ha prodotto storie da raccontare. Quale micro-azione insolita o rischiosa imposterò domani per assicurarmi un aneddoto memorabile tra vent'anni?", usata: false },
+  { id: 5, tipo: "Alter Ego", testo: "Se oggi il mio alter ego audace è rimasto in ombra, in quale momento esatto di domani gli cederò il controllo e quale azione dirompente gli farò compiere?", usata: false },
+  { id: 6, tipo: "Costo del Rimpianto", testo: "Quale stimolo elettrizzante ho sacrificato oggi sull'altare della routine, e in quale blocco orario di domani inserirò una scommessa deliberata contro la noia?", usata: false },
+  { id: 7, tipo: "Uscita di Sicurezza", testo: "Dove sono stato troppo 'prevedibile' oggi per compiacere gli altri? In quale interazione di domani romperò lo schema per agire con assoluta e sorprendente autenticità?", usata: false }
 ];
-
-// Mappa colori per l'interfaccia (neon accents definiti in CSS)
-const VECTOR_COLORS = {
-  "Diretto": "var(--accent-blue)",
-  "Esistenziale": "var(--accent-purple)",
-  "Regia Cinematografica": "var(--accent-yellow)",
-  "Generatore di Aneddoti": "var(--accent-emerald)",
-  "Alter Ego": "var(--accent-orange)",
-  "Costo del Rimpianto": "var(--accent-pink)",
-  "Uscita di Sicurezza": "var(--accent-cyan)"
-};
 
 // 2. Stato Applicativo Globale
 let state = {
   mazzo: JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL)),
   lastReset: 0,
   activeQuestionId: null,      // ID della domanda attiva oggi
-  activeQuestionDate: null     // Data (stringa YYYY-MM-DD) di estrazione
+  activeQuestionDate: null,    // Data (stringa YYYY-MM-DD) di estrazione
+  history: []                  // Cronologia Storica delle pianificazioni salvate
 };
 
 // Chiave di persistenza in LocalStorage
-const STORAGE_KEY = "protocollo_7_vettori_state";
+const STORAGE_KEY = "protocollo_7_vettori_state_v2"; // Aggiornata la versione per evitare conflitti
 
-// 3. Riferimenti agli elementi DOM (FUTURI ELEMENTI FIGMA MCP)
+// 3. Riferimenti agli elementi DOM
 const dom = {
-  // Elemento: Contatore mazzo (Figma Node: "DeckCounter" o "mazzo-counter")
   deckCounter: document.getElementById("deck-counter"),
-  
-  // Elemento: Indicatore reset (Figma Node: "ResetStatus" o "reset-status")
   resetStatus: document.getElementById("reset-status"),
-  
-  // Elemento: Griglia del mazzo (Figma Frame: "DeckGrid" o "deck-grid")
   deckGrid: document.getElementById("deck-grid"),
   
-  // Elemento: Stage di estrazione (Figma State: "StageDraw")
+  // Stages
   drawStage: document.getElementById("draw-stage"),
-  
-  // Elemento: Stage attivo di visualizzazione (Figma State: "StageActive")
   activeStage: document.getElementById("active-stage"),
+  completedStage: document.getElementById("completed-stage"),
   
-  // Elemento: Pulsante estrazione (Figma Instance: "BtnExtract" -> data-figma-id="btn-extract")
+  // Actions & Active Question Elements
   btnExtract: document.getElementById("btn-extract"),
-  
-  // Elemento: Badge Categoria (Figma Text: "BadgeCategory" -> data-figma-id="badge-category")
   categoryBadge: document.getElementById("category-badge"),
-  
-  // Elemento: Data della carta (Figma Text: "CardDate")
   cardDate: document.getElementById("card-date"),
-  
-  // Elemento: Testo Domanda (Figma Text: "TextQuestion" -> data-figma-id="text-question")
   questionText: document.getElementById("question-text"),
   
-  // Elemento: Pulsante reset manuale
+  // Inputs (Split Layout)
+  inputReflectionToday: document.getElementById("input-reflection-today"),
+  inputActionTomorrow: document.getElementById("input-action-tomorrow"),
+  btnSave: document.getElementById("btn-save"),
+  
+  // Completed Stage Previews
+  completedCategoryBadge: document.getElementById("completed-category-badge"),
+  completedCardDate: document.getElementById("completed-card-date"),
+  completedQuestionText: document.getElementById("completed-question-text"),
+  previewReflectionToday: document.getElementById("preview-reflection-today"),
+  previewActionTomorrow: document.getElementById("preview-action-tomorrow"),
+  
+  // Archive & Reset
+  historyList: document.getElementById("history-list"),
   btnManualReset: document.getElementById("btn-manual-reset")
 };
 
@@ -116,6 +100,9 @@ function loadState() {
       // Assicura che la struttura del mazzo sia corretta
       if (!state.mazzo || state.mazzo.length !== 7) {
         state.mazzo = JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL));
+      }
+      if (!state.history) {
+        state.history = [];
       }
     } catch (e) {
       console.error("Errore nel parse del LocalStorage, inizializzo default", e);
@@ -131,6 +118,7 @@ function initDefaultState() {
   state.lastReset = Date.now();
   state.activeQuestionId = null;
   state.activeQuestionDate = null;
+  state.history = [];
   saveState();
 }
 
@@ -160,7 +148,6 @@ function getStartOfWeekMonday() {
 function checkWeeklyReset() {
   const mondayStart = getStartOfWeekMonday();
   
-  // Se l'ultimo reset salvato è precedente al Lunedì a mezzanotte della settimana corrente
   if (state.lastReset < mondayStart) {
     console.log("Weekly reset rilevato! Eseguo resetMazzo()...");
     resetMazzo();
@@ -176,10 +163,10 @@ function resetMazzo() {
   state.mazzo.forEach(q => q.usata = false);
   state.activeQuestionId = null;
   state.activeQuestionDate = null;
-  state.lastReset = Date.now(); // Imposta l'ultimo reset ad ora per bloccare duplicati
+  state.lastReset = Date.now(); // Imposta l'ultimo reset ad ora
   saveState();
   renderAll();
-  console.log("Mazzo ripristinato con successo.");
+  console.log("Mazzo ripristinato con successo per il nuovo ciclo settimanale.");
 }
 
 // 6. Formattazione Date
@@ -195,14 +182,12 @@ function getTodayString() {
 
 // 7. Meccanica Core: Estrazione Domanda
 function estraiDomanda() {
-  // A. Controlla prima se c'è già una domanda estratta oggi
   const todayStr = getTodayString();
   if (state.activeQuestionDate === todayStr) {
     alert("Hai già estratto il vettore di oggi!");
     return;
   }
 
-  // B. Filtra le domande non usate (usata === false)
   const pool = state.mazzo.filter(q => !q.usata);
   
   if (pool.length === 0) {
@@ -210,23 +195,20 @@ function estraiDomanda() {
     return;
   }
 
-  // C. Estrazione casuale
   const randomIndex = Math.floor(Math.random() * pool.length);
   const selectedQuestion = pool[randomIndex];
 
-  // D. Aggiorna lo stato della domanda nel mazzo persistito
   const originalQuestion = state.mazzo.find(q => q.id === selectedQuestion.id);
   if (originalQuestion) {
     originalQuestion.usata = true;
   }
 
-  // E. Imposta lo stato della domanda attiva corrente
   state.activeQuestionId = selectedQuestion.id;
   state.activeQuestionDate = todayStr;
   
   saveState();
 
-  // F. Animazione card shuffle e rendering
+  // Animazione card shake
   const cardBack = document.querySelector(".card-back-design");
   if (cardBack) {
     cardBack.classList.add("card-shake");
@@ -239,27 +221,62 @@ function estraiDomanda() {
   }
 }
 
-// 8. Aggiornamento UI (Rendering)
+// 8. Meccanica Core: Salvataggio Pianificazione (Doppio Vettore)
+function salvaPianificazione() {
+  const reflection = dom.inputReflectionToday.value.trim();
+  const action = dom.inputActionTomorrow.value.trim();
+
+  if (!reflection || !action) {
+    alert("Compila entrambi i campi prima di salvare: la riflessione sull'oggi e l'azione pianificata per domani.");
+    return;
+  }
+
+  const activeQuestion = state.mazzo.find(q => q.id === state.activeQuestionId);
+  if (!activeQuestion) {
+    alert("Errore: nessuna domanda attiva trovata.");
+    return;
+  }
+
+  // Aggiungi alla cronologia storica
+  const entry = {
+    questionId: activeQuestion.id,
+    questionTipo: activeQuestion.tipo,
+    questionTesto: activeQuestion.testo,
+    reflectionToday: reflection,
+    actionTomorrow: action,
+    timestamp: Date.now(),
+    dateString: formatDate(new Date())
+  };
+
+  state.history.unshift(entry);
+
+  // Resetta i campi di testo inseriti
+  dom.inputReflectionToday.value = "";
+  dom.inputActionTomorrow.value = "";
+
+  saveState();
+  renderAll();
+}
+
+// 9. Aggiornamento UI (Rendering)
 function renderAll() {
   const todayStr = getTodayString();
   const activeQuestion = state.mazzo.find(q => q.id === state.activeQuestionId);
   
-  // A. Aggiorna contatori e stato in alto
+  // A. Contatori
   const usateCount = state.mazzo.filter(q => q.usata).length;
   dom.deckCounter.textContent = `${usateCount} / 7 estratti`;
   
   const nextResetDate = new Date(getStartOfWeekMonday() + 7 * 24 * 60 * 60 * 1000);
   dom.resetStatus.textContent = formatDate(nextResetDate) + " 00:00";
 
-  // B. Aggiorna la griglia visuale dei 7 Vettori
+  // B. Griglia dei 7 Vettori
   dom.deckGrid.innerHTML = "";
   VETTORI_DECK_INITIAL.forEach(vInit => {
     const currentStatus = state.mazzo.find(q => q.id === vInit.id);
     const pill = document.createElement("div");
     pill.className = `vector-pill v-${vInit.id} ${currentStatus.usata ? 'used' : ''}`;
     pill.title = `${vInit.tipo}: ${vInit.testo}`;
-    
-    // Predisposizione data-figma-id per Figma Node mapping
     pill.setAttribute("data-figma-id", `vector-pill-${vInit.id}`);
 
     pill.innerHTML = `
@@ -269,36 +286,90 @@ function renderAll() {
     dom.deckGrid.appendChild(pill);
   });
 
-  // C. Gestione degli Stati di Rendering sullo Stage Centrale
+  // C. Gestione Stage Centrale
   
   // Caso 1: Nessuna domanda estratta per oggi
   if (!state.activeQuestionDate || state.activeQuestionDate !== todayStr) {
     dom.drawStage.classList.remove("hidden");
     dom.activeStage.classList.add("hidden");
+    dom.completedStage.classList.add("hidden");
   } 
   // Caso 2: C'è una domanda estratta oggi
   else {
-    dom.drawStage.classList.add("hidden");
-    dom.activeStage.classList.remove("hidden");
+    // Controlla se la pianificazione è stata già salvata per oggi
+    const alreadySavedToday = state.history.find(entry => {
+      const entryDate = new Date(entry.timestamp);
+      const entryDateStr = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}-${String(entryDate.getDate()).padStart(2, '0')}`;
+      return entryDateStr === todayStr && entry.questionId === state.activeQuestionId;
+    });
 
-    dom.activeStage.style.setProperty('--vector-color', VECTOR_COLORS[activeQuestion.tipo]);
-    dom.categoryBadge.style.backgroundColor = VECTOR_COLORS[activeQuestion.tipo];
-    dom.categoryBadge.textContent = activeQuestion.tipo;
-    dom.cardDate.textContent = formatDate(new Date());
-    dom.questionText.textContent = `"${activeQuestion.testo}"`;
+    if (alreadySavedToday) {
+      // Caso 2.A: Già salvato oggi -> Mostra visualizzazione di riepilogo
+      dom.drawStage.classList.add("hidden");
+      dom.activeStage.classList.add("hidden");
+      dom.completedStage.classList.remove("hidden");
+
+      dom.completedCategoryBadge.textContent = activeQuestion.tipo;
+      dom.completedCardDate.textContent = formatDate(new Date(alreadySavedToday.timestamp));
+      dom.completedQuestionText.textContent = `"${activeQuestion.testo}"`;
+      dom.previewReflectionToday.textContent = alreadySavedToday.reflectionToday;
+      dom.previewActionTomorrow.textContent = alreadySavedToday.actionTomorrow;
+    } else {
+      // Caso 2.B: Estratta ma non ancora pianificata -> Mostra il form split
+      dom.drawStage.classList.add("hidden");
+      dom.activeStage.classList.remove("hidden");
+      dom.completedStage.classList.add("hidden");
+
+      dom.categoryBadge.textContent = activeQuestion.tipo;
+      dom.cardDate.textContent = formatDate(new Date());
+      dom.questionText.textContent = `"${activeQuestion.testo}"`;
+    }
+  }
+
+  // D. Rendering della Cronologia Storica
+  dom.historyList.innerHTML = "";
+  if (state.history.length === 0) {
+    dom.historyList.innerHTML = `
+      <div class="no-history">Nessuna riflessione registrata finora. Inizia oggi!</div>
+    `;
+  } else {
+    state.history.forEach(entry => {
+      const histItem = document.createElement("div");
+      histItem.className = "history-item";
+      
+      histItem.innerHTML = `
+        <div class="history-meta">
+          <span class="history-category badge">${entry.questionTipo}</span>
+          <span class="history-time">${entry.dateString} - ${new Date(entry.timestamp).toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+        <div class="history-question">"${entry.questionTesto}"</div>
+        <div class="history-split-previews">
+          <div class="hist-preview-block">
+            <strong>Riflessione sull'Oggi:</strong>
+            <p>${entry.reflectionToday}</p>
+          </div>
+          <div class="hist-preview-block highlight-tomorrow">
+            <strong>Pianificazione Domani:</strong>
+            <p>${entry.actionTomorrow}</p>
+          </div>
+        </div>
+      `;
+      dom.historyList.appendChild(histItem);
+    });
   }
 }
 
-// 9. Registrazione Event Listeners (FUTURO COLLEGAMENTO INTERATTIVO FIGMA MCP)
+// 10. Registrazione Event Listeners
 dom.btnExtract.addEventListener("click", estraiDomanda);
+dom.btnSave.addEventListener("click", salvaPianificazione);
 
 dom.btnManualReset.addEventListener("click", () => {
-  if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo per questa settimana?")) {
+  if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo settimanale? Questo pulirà lo stato di estrazione corrente.")) {
     resetMazzo();
   }
 });
 
-// 10. Inizializzazione ed Eventi di Resuming/Focus (Focalità Temporale Reattiva)
+// 11. Inizializzazione ed Eventi di Resuming/Focus (Focalità Temporale Reattiva)
 function initApp() {
   loadState();
   checkWeeklyReset();
@@ -314,7 +385,7 @@ window.addEventListener("focus", () => {
   console.log("Finestra in focus, verifico temporalità...");
   const resetTriggered = checkWeeklyReset();
   if (!resetTriggered) {
-    renderAll(); // Ricarica modifiche esterne / aggiorna date
+    renderAll();
   }
 });
 
@@ -329,7 +400,7 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// 11. Registrazione Service Worker per supporto PWA Offline
+// 12. Registrazione Service Worker per supporto PWA Offline
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
