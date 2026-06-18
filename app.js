@@ -22,6 +22,27 @@
  *    T_last_reset < T_monday_start
  * ============================================================================
  */
+// 0. Global Error Logger (diagnostic tool for mobile devices)
+window.onerror = function (message, source, lineno, colno, error) {
+  const errorDiv = document.createElement("div");
+  errorDiv.style.position = "fixed";
+  errorDiv.style.top = "0";
+  errorDiv.style.left = "0";
+  errorDiv.style.width = "100%";
+  errorDiv.style.background = "#a82021";
+  errorDiv.style.color = "#fff";
+  errorDiv.style.padding = "15px";
+  errorDiv.style.zIndex = "999999";
+  errorDiv.style.fontSize = "13px";
+  errorDiv.style.fontFamily = "monospace";
+  errorDiv.style.textAlign = "left";
+  errorDiv.style.whiteSpace = "pre-wrap";
+  errorDiv.innerHTML = "Global Error: " + message + "<br>Source: " + source + ":" + lineno + ":" + colno;
+  document.body.appendChild(errorDiv);
+  return false;
+};
+
+let isInitialized = false;
 
 // 1. Dataset: Set a doppio vettore proattivo
 const VETTORI_DECK_INITIAL = [
@@ -235,25 +256,39 @@ function renderAll() {
 
 // 9. Inizializzazione ed Eventi di Focus/Visibilità
 function initApp() {
-  initDOM();
+  if (isInitialized) return;
   
-  // Registrazione Eventi dopo l'inizializzazione del DOM
-  dom.btnExtract.addEventListener("click", estraiDomanda);
-  dom.btnManualReset.addEventListener("click", () => {
-    if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo settimanale?")) {
-      resetMazzo();
-    }
-  });
+  try {
+    initDOM();
+    
+    // Registrazione Eventi dopo l'inizializzazione del DOM
+    dom.btnExtract.addEventListener("click", estraiDomanda);
+    dom.btnManualReset.addEventListener("click", () => {
+      if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo settimanale?")) {
+        resetMazzo();
+      }
+    });
 
-  loadState();
-  checkWeeklyReset();
-  renderAll();
-  console.log("Applicazione '7 Vettori' caricata.");
+    loadState();
+    checkWeeklyReset();
+    renderAll();
+    isInitialized = true;
+    console.log("Applicazione '7 Vettori' caricata con successo.");
+  } catch (e) {
+    console.error("Errore durante initApp:", e);
+    window.onerror(e.message, "app.js", 0, 0, e);
+  }
 }
 
-document.addEventListener("DOMContentLoaded", initApp);
+// ReadyState detection - robust loading mechanism
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
 
 window.addEventListener("focus", () => {
+  if (!isInitialized) return;
   const resetTriggered = checkWeeklyReset();
   if (!resetTriggered) {
     renderAll();
@@ -262,6 +297,7 @@ window.addEventListener("focus", () => {
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
+    if (!isInitialized) return;
     const resetTriggered = checkWeeklyReset();
     if (!resetTriggered) {
       renderAll();
