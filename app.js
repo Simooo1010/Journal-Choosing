@@ -45,34 +45,35 @@ let state = {
 // Chiave di persistenza in LocalStorage
 const STORAGE_KEY = "protocollo_7_vettori_state_v3";
 
-// 3. Riferimenti agli elementi DOM
-const dom = {
-  deckCounter: document.getElementById("deck-counter"),
-  resetStatus: document.getElementById("reset-status"),
-  deckGrid: document.getElementById("deck-grid"),
-  
-  // Views
-  cardBackView: document.getElementById("card-back-view"),
-  activeCardView: document.getElementById("active-card-view"),
-  
-  // Active Question Info
-  categoryBadge: document.getElementById("category-badge"),
-  cardDate: document.getElementById("card-date"),
-  questionText: document.getElementById("question-text"),
-  
-  // Controls
-  btnExtract: document.getElementById("btn-extract"),
-  btnManualReset: document.getElementById("btn-manual-reset")
-};
+// 3. Riferimenti agli elementi DOM (inizializzati al caricamento della pagina)
+const dom = {};
+
+function initDOM() {
+  dom.deckCounter = document.getElementById("deck-counter");
+  dom.resetStatus = document.getElementById("reset-status");
+  dom.deckGrid = document.getElementById("deck-grid");
+  dom.cardBackView = document.getElementById("card-back-view");
+  dom.activeCardView = document.getElementById("active-card-view");
+  dom.categoryBadge = document.getElementById("category-badge");
+  dom.cardDate = document.getElementById("card-date");
+  dom.questionText = document.getElementById("question-text");
+  dom.btnExtract = document.getElementById("btn-extract");
+  dom.btnManualReset = document.getElementById("btn-manual-reset");
+}
 
 // 4. Caricamento e Persistenza dello Stato
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      state = JSON.parse(saved);
-      if (!state.mazzo || state.mazzo.length !== 7) {
-        state.mazzo = JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL));
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        state.mazzo = parsed.mazzo && parsed.mazzo.length === 7 ? parsed.mazzo : JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL));
+        state.lastReset = typeof parsed.lastReset === 'number' ? parsed.lastReset : Date.now();
+        state.activeQuestionId = typeof parsed.activeQuestionId === 'number' || parsed.activeQuestionId === null ? parsed.activeQuestionId : null;
+        state.activeQuestionDate = typeof parsed.activeQuestionDate === 'string' || parsed.activeQuestionDate === null ? parsed.activeQuestionDate : null;
+      } else {
+        initDefaultState();
       }
     } catch (e) {
       console.error("Errore nel parse dello stato, inizializzo default", e);
@@ -232,17 +233,18 @@ function renderAll() {
   }
 }
 
-// 9. Registrazione Eventi
-dom.btnExtract.addEventListener("click", estraiDomanda);
-
-dom.btnManualReset.addEventListener("click", () => {
-  if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo settimanale?")) {
-    resetMazzo();
-  }
-});
-
-// 10. Inizializzazione ed Eventi di Focus/Visibilità
+// 9. Inizializzazione ed Eventi di Focus/Visibilità
 function initApp() {
+  initDOM();
+  
+  // Registrazione Eventi dopo l'inizializzazione del DOM
+  dom.btnExtract.addEventListener("click", estraiDomanda);
+  dom.btnManualReset.addEventListener("click", () => {
+    if (confirm("Sei sicuro di voler reinizializzare manualmente il mazzo settimanale?")) {
+      resetMazzo();
+    }
+  });
+
   loadState();
   checkWeeklyReset();
   renderAll();
