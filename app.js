@@ -24,6 +24,12 @@
  */
 // 0. Global Error Logger (diagnostic tool for mobile devices)
 window.onerror = function (message, source, lineno, colno, error) {
+  // Ignore generic cross-origin script errors (often caused by browser extensions, ad blockers, or Vercel analytics)
+  if (message === "Script error." || !source) {
+    console.warn("Ignored cross-origin or extension script error:", message);
+    return false;
+  }
+
   const errorDiv = document.createElement("div");
   errorDiv.style.position = "fixed";
   errorDiv.style.top = "0";
@@ -89,7 +95,11 @@ function loadState() {
     try {
       const parsed = JSON.parse(saved);
       if (parsed && typeof parsed === 'object') {
-        state.mazzo = parsed.mazzo && parsed.mazzo.length === 7 ? parsed.mazzo : JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL));
+        const isValidMazzo = Array.isArray(parsed.mazzo) && 
+                            parsed.mazzo.length === 7 && 
+                            parsed.mazzo.every(q => q && typeof q.id === 'number' && typeof q.usata === 'boolean');
+
+        state.mazzo = isValidMazzo ? parsed.mazzo : JSON.parse(JSON.stringify(VETTORI_DECK_INITIAL));
         state.lastReset = typeof parsed.lastReset === 'number' ? parsed.lastReset : Date.now();
         state.activeQuestionId = typeof parsed.activeQuestionId === 'number' || parsed.activeQuestionId === null ? parsed.activeQuestionId : null;
         state.activeQuestionDate = typeof parsed.activeQuestionDate === 'string' || parsed.activeQuestionDate === null ? parsed.activeQuestionDate : null;
@@ -217,7 +227,7 @@ function renderAll() {
   // B. Aggiorna la griglia visuale
   dom.deckGrid.innerHTML = "";
   VETTORI_DECK_INITIAL.forEach(vInit => {
-    const currentStatus = state.mazzo.find(q => q.id === vInit.id);
+    const currentStatus = state.mazzo.find(q => q.id === vInit.id) || { usata: false };
     const pill = document.createElement("div");
     pill.className = `vector-pill v-${vInit.id} ${currentStatus.usata ? 'used' : ''}`;
     pill.title = `${vInit.tipo}: ${vInit.testo}`;
@@ -304,3 +314,12 @@ document.addEventListener("visibilitychange", () => {
     }
   }
 });
+
+// 10. Service Worker Registration (PWA offline support)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+      .catch(err => console.error('Service Worker registration failed:', err));
+  });
+}
